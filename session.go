@@ -16,9 +16,9 @@ func main() {
 	r := cedar.NewRouter()
 	x := NewSession(r)
 	x.Get("/", func(writer http.ResponseWriter, request *http.Request, session *Session) {
-		session.SetSession()
+		writer.Write([]byte("hello world"))
 	}, nil)
-	http.ListenAndServe(":80", x)
+	http.ListenAndServe(":80", x.tree)
 
 }
 func NewSession(hp *cedar.Trie) *Session {
@@ -60,16 +60,16 @@ func (si *Session) GetSession(uuid string) {
 
 }
 func (si *Session) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s *Session), hal http.Handler) {
-	//x := Sha1(si.CreateUUID())
-	//c1 := http.Cookie{
-	//	Name:     "session",
-	//	Value:    string(x),
-	//	HttpOnly: true,
-	//}
-	//w.Header().Set("Set-Cookie", c1.String())
-	//w.Header().Add("Set-Cookie", c1.String())
-	si.tree.Get(path, func(writer http.ResponseWriter, request *http.Request) {
 
+	si.tree.Get(path, func(writer http.ResponseWriter, request *http.Request) {
+		x := Sha1(si.CreateUUID([]byte(request.RemoteAddr)))
+		c := http.Cookie{
+			Name:     "session",
+			Value:    string(x),
+			HttpOnly: true,
+		}
+		writer.Header().Set("Set-Cookie", c.String())
+		fn(writer, request, si)
 	}, hal)
 }
 
@@ -79,7 +79,7 @@ func (si *Session) Get(path string, fn func(w http.ResponseWriter, r *http.Reque
 func (si *Session) SetSession(w http.ResponseWriter, key []byte, body interface{}) []byte {
 	if key == nil {
 
-		return x
+		//return x
 	}
 	return nil
 }
