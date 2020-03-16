@@ -2,7 +2,6 @@
 ## usage
 * step1 `r:=cedar.NewRouter()`
 * step2 `x := cedar_session.NewSession(r)`
-* step3
 ### Session method ,it must use in the http method
 **Set(key string ,body interface{})**
 

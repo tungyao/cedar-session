@@ -36,7 +36,6 @@ func main() {
 func NewSession(hp *cedar.Trie) *SessionX {
 	log.Println("Session : starting")
 	s := &SessionX{
-		RWMutex: &sync.RWMutex{},
 		Mutex:   &sync.Mutex{},
 		Handler: hp,
 		Self:    newId(),
@@ -46,7 +45,6 @@ func NewSession(hp *cedar.Trie) *SessionX {
 
 // struct
 type SessionX struct {
-	*sync.RWMutex
 	Handler *cedar.Trie
 	*sync.Mutex
 	Self []byte
@@ -291,12 +289,16 @@ func (si *SessionX) CreateUUID(xtr []byte) []byte {
 
 // session function
 func (sn Session) Set(key string, body interface{}) {
+	sn.RLock()
+	defer sn.RUnlock()
 	X[sn.Cookie] = append(X[sn.Cookie], &SX{
 		Key:  key,
 		Body: body,
 	})
 }
 func (sn Session) Get(key string) interface{} {
+	sn.RLock()
+	defer sn.RUnlock()
 	x := X[sn.Cookie]
 	for _, v := range x {
 		if v.Key == key {
