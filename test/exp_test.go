@@ -18,15 +18,15 @@ func TestMainX(t *testing.T) {
 	x.Get("/get", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
 		fmt.Fprintf(w, "%s", s.Get("hello"))
 	}, nil)
-	x.Group("/a", func(groups *cedar_session.TheGroup) {
+	x.Group("/a", func(groups *cedar_session.Group) {
 		groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
 			w.Write([]byte("hello"))
 		}, nil)
-		groups.Group("/c", func(groups *cedar_session.TheGroup) {
+		groups.Group("/c", func(groups *cedar_session.Group) {
 			groups.Get("/d", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
 				w.Write([]byte("bye bye"))
 			}, nil)
 		})
 	})
-	http.ListenAndServe(":80", x.Handler)
+	http.ListenAndServe(":800", x.Handler)
 }

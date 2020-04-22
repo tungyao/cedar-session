@@ -26,16 +26,16 @@ func main() {
 	x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
 		fmt.Fprintf(w, "%s", s.Get("hello"))
 	}, nil)
-	x.Group("/a", func(groups *TheGroup) {
+	x.Group("/a", func(groups *Group) {
 		groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s Session) {
 			w.Write([]byte("hello"))
 		}, nil)
 	})
 	http.ListenAndServe(":80", x.Handler)
 }
-func NewSession(hp *cedar.Trie) *SessionX {
+func NewSession(hp *cedar.Trie) *sessionx {
 	log.Println("Session : starting")
-	s := &SessionX{
+	s := &sessionx{
 		Mutex:   &sync.Mutex{},
 		Handler: hp,
 		Self:    newId(),
@@ -44,14 +44,14 @@ func NewSession(hp *cedar.Trie) *SessionX {
 }
 
 // struct
-type SessionX struct {
+type sessionx struct {
 	Handler *cedar.Trie
 	*sync.Mutex
 	Self []byte
 }
-type TheGroup struct {
-	cedar.Groups
-	S *SessionX
+type Group struct {
+	gG cedar.Groups
+	S  *sessionx
 }
 type Session struct {
 	sync.RWMutex
@@ -63,7 +63,7 @@ type SX struct {
 }
 
 //
-func (si *SessionX) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
 	si.Handler.Get(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -87,7 +87,7 @@ func (si *SessionX) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 		}
 	}, hal)
 }
-func (si *SessionX) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
 	si.Handler.Post(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -111,7 +111,7 @@ func (si *SessionX) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 		}
 	}, hal)
 }
-func (si *SessionX) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
 	si.Handler.Put(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -135,7 +135,7 @@ func (si *SessionX) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 		}
 	}, hal)
 }
-func (si *SessionX) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
 	si.Handler.Delete(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -159,17 +159,20 @@ func (si *SessionX) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 		}
 	}, hal)
 }
-func (si *SessionX) Group(path string, fn func(groups *TheGroup)) {
-	g := new(TheGroup)
-	g.Tree = si.Handler
-	g.Path = path
+func (si *sessionx) Group(path string, fn func(groups *Group)) {
+	g := new(Group)
+	g.gG.Tree = si.Handler
+	g.gG.Path = path
 	g.S = si
 	fn(g)
 }
+func (si *sessionx) Dynamic(ymlPath string) {
+	si.Handler.Dynamic(ymlPath)
+}
 
 // group function
-func (t *TheGroup) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
-	t.Groups.Get(path, func(w http.ResponseWriter, r *http.Request) {
+func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+	t.gG.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
 			x := Sha1(t.S.CreateUUID([]byte(r.RemoteAddr)))
@@ -192,8 +195,8 @@ func (t *TheGroup) Get(path string, fn func(w http.ResponseWriter, r *http.Reque
 		}
 	}, handler)
 }
-func (t *TheGroup) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
-	t.Groups.Post(path, func(w http.ResponseWriter, r *http.Request) {
+func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+	t.gG.Post(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
 			x := Sha1(t.S.CreateUUID([]byte(r.RemoteAddr)))
@@ -216,8 +219,8 @@ func (t *TheGroup) Post(path string, fn func(w http.ResponseWriter, r *http.Requ
 		}
 	}, handler)
 }
-func (t *TheGroup) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
-	t.Groups.Put(path, func(w http.ResponseWriter, r *http.Request) {
+func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+	t.gG.Put(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
 			x := Sha1(t.S.CreateUUID([]byte(r.RemoteAddr)))
@@ -240,8 +243,8 @@ func (t *TheGroup) Put(path string, fn func(w http.ResponseWriter, r *http.Reque
 		}
 	}, handler)
 }
-func (t *TheGroup) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
-	t.Groups.Get(path, func(w http.ResponseWriter, r *http.Request) {
+func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+	t.gG.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
 			x := Sha1(t.S.CreateUUID([]byte(r.RemoteAddr)))
@@ -264,10 +267,10 @@ func (t *TheGroup) Delete(path string, fn func(w http.ResponseWriter, r *http.Re
 		}
 	}, handler)
 }
-func (t *TheGroup) Group(path string, fn func(groups *TheGroup)) {
-	g := new(TheGroup)
-	g.Path = t.Path + path
-	g.Tree = t.Tree
+func (t *Group) Group(path string, fn func(groups *Group)) {
+	g := new(Group)
+	g.gG.Path = t.gG.Path + path
+	g.gG.Tree = t.gG.Tree
 	fn(g)
 }
 
@@ -276,7 +279,7 @@ func (t *TheGroup) Group(path string, fn func(groups *TheGroup)) {
 //}
 // UUID 64 bit
 // 8-4-4-12 16hex string
-func (si *SessionX) CreateUUID(xtr []byte) []byte {
+func (si *sessionx) CreateUUID(xtr []byte) []byte {
 	str := fmt.Sprintf("%x", xtr)
 	strLow := ComplementHex(str[:(len(str)-1)/3], 8)
 	strMid := ComplementHex(str[(len(str)-1)/3:(len(str)-1)*2/3], 4)
@@ -285,6 +288,21 @@ func (si *SessionX) CreateUUID(xtr []byte) []byte {
 	<-time.After(1 * time.Nanosecond)
 	ti := time.Now().UnixNano()
 	return []byte(fmt.Sprintf("%s-%x-%s-%s", strLow, ti, strMid, si.Self))
+}
+
+func ComplementHex(s string, x int) string {
+	if len(s) == x {
+		return s
+	}
+	if len(s) < x {
+		for i := 0; i < x-len(s); i++ {
+			s += "0"
+		}
+	}
+	if len(s) > x {
+		return s[:x]
+	}
+	return s
 }
 
 // session function
@@ -306,20 +324,6 @@ func (sn Session) Get(key string) interface{} {
 		}
 	}
 	return nil
-}
-func ComplementHex(s string, x int) string {
-	if len(s) == x {
-		return s
-	}
-	if len(s) < x {
-		for i := 0; i < x-len(s); i++ {
-			s += "0"
-		}
-	}
-	if len(s) > x {
-		return s[:x]
-	}
-	return s
 }
 
 // other function
