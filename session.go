@@ -271,6 +271,7 @@ func (t *Group) Group(path string, fn func(groups *Group)) {
 	g := new(Group)
 	g.gG.Path = t.gG.Path + path
 	g.gG.Tree = t.gG.Tree
+	g.S = t.S
 	fn(g)
 }
 
