@@ -3,12 +3,12 @@ package cedar_session
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/tungyao/cedar"
-	"log"
 	"math/rand"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/tungyao/cedar"
 )
 
 var X map[string][]*SX
@@ -34,9 +34,7 @@ func main() {
 	http.ListenAndServe(":80", x.Handler)
 }
 func NewSession(hp *cedar.Trie) *sessionx {
-	log.Println("Session : starting")
 	s := &sessionx{
-		Mutex:   &sync.Mutex{},
 		Handler: hp,
 		Self:    newId(),
 	}
@@ -46,7 +44,7 @@ func NewSession(hp *cedar.Trie) *sessionx {
 // struct
 type sessionx struct {
 	Handler *cedar.Trie
-	*sync.Mutex
+	sync.Mutex
 	Self []byte
 }
 type Group struct {
@@ -101,13 +99,10 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 		}
 		if c != nil {
 			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(writer, request, Session{})
 		}
 	}, hal)
 }
@@ -125,13 +120,10 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 		}
 		if c != nil {
 			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(writer, request, Session{})
 		}
 	}, hal)
 }
@@ -149,13 +141,10 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 		}
 		if c != nil {
 			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(writer, request, Session{})
 		}
 	}, hal)
 }
@@ -185,13 +174,10 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 		}
 		if c != nil {
 			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(w, r, Session{})
 		}
 	}, handler)
 }
@@ -209,13 +195,10 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 		}
 		if c != nil {
 			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(w, r, Session{})
 		}
 	}, handler)
 }
@@ -233,13 +216,10 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 		}
 		if c != nil {
 			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(w, r, Session{})
 		}
 	}, handler)
 }
@@ -257,13 +237,10 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 		}
 		if c != nil {
 			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(w, r, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(w, r, Session{})
 		}
 	}, handler)
 }
@@ -284,8 +261,8 @@ func (si *sessionx) CreateUUID(xtr []byte) []byte {
 	str := fmt.Sprintf("%x", xtr)
 	strLow := ComplementHex(str[:(len(str)-1)/3], 8)
 	strMid := ComplementHex(str[(len(str)-1)/3:(len(str)-1)*2/3], 4)
-	si.Mutex.Lock()
-	defer si.Mutex.Unlock()
+	si.Lock()
+	defer si.Unlock()
 	<-time.After(1 * time.Nanosecond)
 	ti := time.Now().UnixNano()
 	return []byte(fmt.Sprintf("%s-%x-%s-%s", strLow, ti, strMid, si.Self))
@@ -340,6 +317,5 @@ func newId() []byte {
 		<-time.After(time.Nanosecond * 10)
 		da[i] = d[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(15)]
 	}
-	log.Printf("Session : Create Session Id => %s", da)
 	return da
 }
