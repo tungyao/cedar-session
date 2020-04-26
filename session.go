@@ -224,7 +224,7 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 	}, handler)
 }
 func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
-	t.gG.Get(path, func(w http.ResponseWriter, r *http.Request) {
+	t.gG.Delete(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
 			x := Sha1(t.S.CreateUUID([]byte(r.RemoteAddr)))
