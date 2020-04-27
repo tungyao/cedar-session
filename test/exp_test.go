@@ -11,6 +11,14 @@ import "../../cedar-session"
 func TestMainX(t *testing.T) {
 	r := cedar.NewRouter()
 	x := cedar_session.NewSession(r)
+	x.Middleware("test", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) bool {
+		fmt.Println("12312")
+		http.Redirect(w, r, "/a/b", 302)
+		return false
+	})
+	x.Get("/", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
+		w.Write([]byte("hellox"))
+	}, nil, "test")
 	x.Get("/set", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
 		s.Set("hello", "world"+r.RemoteAddr)
 		w.Write([]byte("hello world"))
@@ -28,5 +36,5 @@ func TestMainX(t *testing.T) {
 			}, nil)
 		})
 	})
-	http.ListenAndServe(":800", x.Handler)
+	http.ListenAndServe(":82", x.Handler)
 }

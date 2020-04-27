@@ -61,7 +61,7 @@ type SX struct {
 }
 
 //
-func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler, middleware ...string) {
 	si.Handler.Get(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -83,9 +83,9 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 				RWMutex: sync.RWMutex{},
 			})
 		}
-	}, hal)
+	}, hal, middleware...)
 }
-func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler, middleware ...string) {
 	si.Handler.Post(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -104,9 +104,9 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 		} else {
 			fn(writer, request, Session{})
 		}
-	}, hal)
+	}, hal, middleware...)
 }
-func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler, middleware ...string) {
 	si.Handler.Put(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -125,9 +125,9 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 		} else {
 			fn(writer, request, Session{})
 		}
-	}, hal)
+	}, hal, middleware...)
 }
-func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler) {
+func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), hal http.Handler, middleware ...string) {
 	si.Handler.Delete(path, func(writer http.ResponseWriter, request *http.Request) {
 		c, err := request.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -146,7 +146,7 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 		} else {
 			fn(writer, request, Session{})
 		}
-	}, hal)
+	}, hal, middleware...)
 }
 func (si *sessionx) Group(path string, fn func(groups *Group)) {
 	g := new(Group)
@@ -158,9 +158,16 @@ func (si *sessionx) Group(path string, fn func(groups *Group)) {
 func (si *sessionx) Dynamic(ymlPath string) {
 	si.Handler.Dynamic(ymlPath)
 }
+func (si *sessionx) Middleware(name string, fn func(w http.ResponseWriter, r *http.Request, s Session) bool) {
+	si.Handler.Middle(name, func(w http.ResponseWriter, r *http.Request) bool {
+		return fn(w, r, Session{
+			RWMutex: sync.RWMutex{},
+		})
+	})
+}
 
 // group function
-func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler, middleware ...string) {
 	t.gG.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -179,9 +186,9 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 		} else {
 			fn(w, r, Session{})
 		}
-	}, handler)
+	}, handler, middleware...)
 }
-func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler, middleware ...string) {
 	t.gG.Post(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -200,9 +207,9 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 		} else {
 			fn(w, r, Session{})
 		}
-	}, handler)
+	}, handler, middleware...)
 }
-func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler, middleware ...string) {
 	t.gG.Put(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -221,9 +228,9 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 		} else {
 			fn(w, r, Session{})
 		}
-	}, handler)
+	}, handler, middleware...)
 }
-func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler) {
+func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Request, s Session), handler http.Handler, middleware ...string) {
 	t.gG.Delete(path, func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session")
 		if err == http.ErrNoCookie {
@@ -242,7 +249,7 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 		} else {
 			fn(w, r, Session{})
 		}
-	}, handler)
+	}, handler, middleware...)
 }
 func (t *Group) Group(path string, fn func(groups *Group)) {
 	g := new(Group)
@@ -251,10 +258,17 @@ func (t *Group) Group(path string, fn func(groups *Group)) {
 	g.S = t.S
 	fn(g)
 }
+func (t *Group) Middleware(name string, fn func(w http.ResponseWriter, r *http.Request, s Session) bool) {
+	t.gG.Middleware(name, func(w http.ResponseWriter, r *http.Request) bool {
+		return fn(w, r, Session{
+			RWMutex: sync.RWMutex{},
+		})
+	})
+}
 
-//func (mux *SessionX) Delete(path string, handlerFunc http.HandlerFunc, handler http.Handler) {
+// func (mux *SessionX) Delete(path string, handlerFunc http.HandlerFunc, handler http.Handler) {
 //	mux.tree.Delete(mux.path+path, handlerFunc, handler)
-//}
+// }
 // UUID 64 bit
 // 8-4-4-12 16hex string
 func (si *sessionx) CreateUUID(xtr []byte) []byte {
