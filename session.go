@@ -3,6 +3,7 @@ package cedar_session
 import (
 	"crypto/sha1"
 	"fmt"
+	"github.com/tungyao/spruce"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -11,10 +12,10 @@ import (
 	"github.com/tungyao/cedar"
 )
 
-var X map[string][]*SX
+var X *spruce.Hash
 
 func init() {
-	X = make(map[string][]*SX)
+	X = spruce.CreateHash(1024)
 }
 func main() {
 	r := cedar.NewRouter()
@@ -69,8 +70,8 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -93,8 +94,8 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -114,8 +115,8 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -135,8 +136,8 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -175,8 +176,8 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -196,8 +197,8 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -217,8 +218,8 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				HttpOnly: true, Secure: true,
+				Expires: time.Now().Add(1 * time.Hour),
 			})
 		}
 		if c != nil {
@@ -239,6 +240,7 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true,
+				Secure:   true,
 				Expires:  time.Now().Add(1 * time.Hour),
 			})
 		}
@@ -299,23 +301,21 @@ func ComplementHex(s string, x int) string {
 
 // session function
 func (sn Session) Set(key string, body interface{}) {
-	sn.RLock()
-	defer sn.RUnlock()
-	X[sn.Cookie] = append(X[sn.Cookie], &SX{
-		Key:  key,
-		Body: body,
-	})
+	X.Set([]byte(key), body, 3600)
+	//X[sn.Cookie] = append(X[sn.Cookie], &SX{
+	//	Key:  key,
+	//	Body: body,
+	//})
 }
 func (sn Session) Get(key string) interface{} {
-	sn.RLock()
-	defer sn.RUnlock()
-	x := X[sn.Cookie]
-	for _, v := range x {
-		if v.Key == key {
-			return v.Body
-		}
-	}
-	return nil
+	//x := X[sn.Cookie]
+	//for _, v := range x {
+	//	if v.Key == key {
+	//		return v.Body
+	//	}
+	//}
+	//return nil
+	return X.Get([]byte(key))
 }
 
 // other function
