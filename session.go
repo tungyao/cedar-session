@@ -317,6 +317,16 @@ func (sn Session) Get(key string) interface{} {
 	//return nil
 	return X.Get([]byte(key))
 }
+func (sn Session) Flush(key string) interface{} {
+	//x := X[sn.Cookie]
+	//for _, v := range x {
+	//	if v.Key == key {
+	//		return v.Body
+	//	}
+	//}
+	//return nil
+	return X.Delete([]byte(key))
+}
 
 // other function
 func Sha1(b []byte) []byte {
