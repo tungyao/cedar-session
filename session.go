@@ -92,8 +92,7 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,,
-				Domain:  si.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
 		if c != nil {
@@ -117,7 +116,7 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
 		if c != nil {
@@ -138,7 +137,7 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
 		if c != nil {
@@ -159,7 +158,7 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
 		if c != nil {
@@ -199,7 +198,7 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -220,7 +219,7 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain:  t.S.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -241,7 +240,7 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -263,7 +262,7 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 				Value:    string(x),
 				HttpOnly: true,
 				Secure:   true,
-				Expires:  time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
+				Expires:  time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
