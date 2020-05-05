@@ -3,12 +3,13 @@ package cedar_session
 import (
 	"crypto/sha1"
 	"fmt"
-	ap "git.yaop.ink/tungyao/awesome-pool"
-	"github.com/tungyao/spruce"
 	"math/rand"
 	"net/http"
 	"sync"
 	"time"
+
+	ap "git.yaop.ink/tungyao/awesome-pool"
+	"github.com/tungyao/spruce"
 
 	"github.com/tungyao/cedar"
 )
@@ -26,27 +27,28 @@ const (
 )
 
 func main() {
-	//r := cedar.NewRouter()
-	//x := NewSession(r, LOCAL)
-	//x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
+	// r := cedar.NewRouter()
+	// x := NewSession(r, LOCAL)
+	// x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//	s.Set("hello", "world"+r.RemoteAddr)
 	//	w.Write([]byte("hello world"))
-	//}, nil)
-	//x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
+	// }, nil)
+	// x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//	fmt.Fprintf(w, "%s", s.Get("hello"))
-	//}, nil)
-	//x.Group("/a", func(groups *Group) {
+	// }, nil)
+	// x.Group("/a", func(groups *Group) {
 	//	groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//		w.Write([]byte("hello"))
 	//	}, nil)
-	//})
-	//http.ListenAndServe(":80", x.Handler)
+	// })
+	// http.ListenAndServe(":80", x.Handler)
 }
 func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 	s := &sessionx{
 		Handler: hp,
 		Self:    newId(),
 		op:      types,
+		Domino:  args[0].(string),
 	}
 	OP = types
 	switch types {
@@ -54,7 +56,7 @@ func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 		X = spruce.CreateHash(4096)
 	case SPRUCE:
 	case SpruceLocal:
-		KV, _ = ap.NewPool(args[0].(int), args[1].(string))
+		KV, _ = ap.NewPool(args[1].(int), args[2].(string))
 	}
 	return s
 }
@@ -63,8 +65,9 @@ func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 type sessionx struct {
 	Handler *cedar.Trie
 	sync.Mutex
-	Self []byte
-	op   int
+	Self   []byte
+	op     int
+	Domino string
 }
 type Group struct {
 	gG cedar.Groups
@@ -89,7 +92,8 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,,
+				Domain:  si.Domino,
 			})
 		}
 		if c != nil {
@@ -113,7 +117,7 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
 			})
 		}
 		if c != nil {
@@ -134,7 +138,7 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
 			})
 		}
 		if c != nil {
@@ -155,7 +159,7 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain:  si.Domino,
 			})
 		}
 		if c != nil {
@@ -195,7 +199,7 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -216,7 +220,7 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain:  t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -237,7 +241,7 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
-				Expires: time.Now().Add(1 * time.Hour),
+				Expires: time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -259,7 +263,7 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 				Value:    string(x),
 				HttpOnly: true,
 				Secure:   true,
-				Expires:  time.Now().Add(1 * time.Hour),
+				Expires:  time.Now().Add(1 * time.Hour),Domain: t.S.Domino,
 			})
 		}
 		if c != nil {

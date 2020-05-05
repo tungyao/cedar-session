@@ -20,7 +20,7 @@ func TestMainX(t *testing.T) {
 		w.Write([]byte("hellox"))
 	}, nil, "test")
 	x.Get("/set", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
-		s.Set("hello", "world"+r.RemoteAddr)
+		s.Set("hello", []byte("world"+r.RemoteAddr))
 		w.Write([]byte("hello world"))
 	}, nil)
 	x.Get("/get", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) {
