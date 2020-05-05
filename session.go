@@ -321,29 +321,29 @@ func ComplementHex(s string, x int) string {
 func (sn Session) Set(key string, body []byte) {
 	switch OP {
 	case LOCAL:
-		X.Set([]byte(key), body, 3600)
+		X.Set([]byte(sn.Cookie+key), body, 3600)
 	case SPRUCE:
 	case SpruceLocal:
-		kvSet([]byte(key), body, 3600)
+		kvSet([]byte(sn.Cookie+key), body, 3600)
 	}
 }
 func (sn Session) Get(key string) interface{} {
 	switch OP {
 	case LOCAL:
-		return X.Get([]byte(key))
+		return X.Get([]byte(sn.Cookie + key))
 	case SPRUCE:
 	case SpruceLocal:
-		return kvGet([]byte(key))
+		return kvGet([]byte(sn.Cookie + key))
 	}
 	return []byte("")
 }
 func (sn Session) Flush(key string) interface{} {
 	switch OP {
 	case LOCAL:
-		return X.Delete([]byte(key))
+		return X.Delete([]byte(sn.Cookie + key))
 	case SPRUCE:
 	case SpruceLocal:
-		return kvDelete([]byte(key))
+		return kvDelete([]byte(sn.Cookie + key))
 	}
 	return []byte("")
 
