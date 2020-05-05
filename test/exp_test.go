@@ -10,7 +10,7 @@ import "../../cedar-session"
 
 func TestMainX(t *testing.T) {
 	r := cedar.NewRouter()
-	x := cedar_session.NewSession(r)
+	x := cedar_session.NewSession(r, cedar_session.SpruceLocal)
 	x.Middleware("test", func(w http.ResponseWriter, r *http.Request, s cedar_session.Session) bool {
 		fmt.Println("12312")
 		http.Redirect(w, r, "/a/b", 302)

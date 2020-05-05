@@ -3,6 +3,7 @@ package cedar_session
 import (
 	"crypto/sha1"
 	"fmt"
+	ap "git.yaop.ink/tungyao/awesome-pool"
 	"github.com/tungyao/spruce"
 	"math/rand"
 	"net/http"
@@ -12,32 +13,48 @@ import (
 	"github.com/tungyao/cedar"
 )
 
-var X *spruce.Hash
+var (
+	KV *ap.Pool
+	X  *spruce.Hash
+	OP int = -1
+)
 
-func init() {
-	X = spruce.CreateHash(1024)
-}
+const (
+	LOCAL = iota
+	SpruceLocal
+	SPRUCE
+)
+
 func main() {
-	r := cedar.NewRouter()
-	x := NewSession(r)
-	x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
-		s.Set("hello", "world"+r.RemoteAddr)
-		w.Write([]byte("hello world"))
-	}, nil)
-	x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
-		fmt.Fprintf(w, "%s", s.Get("hello"))
-	}, nil)
-	x.Group("/a", func(groups *Group) {
-		groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s Session) {
-			w.Write([]byte("hello"))
-		}, nil)
-	})
-	http.ListenAndServe(":80", x.Handler)
+	//r := cedar.NewRouter()
+	//x := NewSession(r, LOCAL)
+	//x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
+	//	s.Set("hello", "world"+r.RemoteAddr)
+	//	w.Write([]byte("hello world"))
+	//}, nil)
+	//x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
+	//	fmt.Fprintf(w, "%s", s.Get("hello"))
+	//}, nil)
+	//x.Group("/a", func(groups *Group) {
+	//	groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s Session) {
+	//		w.Write([]byte("hello"))
+	//	}, nil)
+	//})
+	//http.ListenAndServe(":80", x.Handler)
 }
-func NewSession(hp *cedar.Trie) *sessionx {
+func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 	s := &sessionx{
 		Handler: hp,
 		Self:    newId(),
+		op:      types,
+	}
+	OP = types
+	switch types {
+	case LOCAL:
+		X = spruce.CreateHash(4096)
+	case SPRUCE:
+	case SpruceLocal:
+		KV, _ = ap.NewPool(args[0].(int), args[1].(string))
 	}
 	return s
 }
@@ -47,6 +64,7 @@ type sessionx struct {
 	Handler *cedar.Trie
 	sync.Mutex
 	Self []byte
+	op   int
 }
 type Group struct {
 	gG cedar.Groups
@@ -300,32 +318,35 @@ func ComplementHex(s string, x int) string {
 }
 
 // session function
-func (sn Session) Set(key string, body interface{}) {
-	X.Set([]byte(key), body, 3600)
-	//X[sn.Cookie] = append(X[sn.Cookie], &SX{
-	//	Key:  key,
-	//	Body: body,
-	//})
+func (sn Session) Set(key string, body []byte) {
+	switch OP {
+	case LOCAL:
+		X.Set([]byte(key), body, 3600)
+	case SPRUCE:
+	case SpruceLocal:
+		kvSet([]byte(key), body, 3600)
+	}
 }
 func (sn Session) Get(key string) interface{} {
-	//x := X[sn.Cookie]
-	//for _, v := range x {
-	//	if v.Key == key {
-	//		return v.Body
-	//	}
-	//}
-	//return nil
-	return X.Get([]byte(key))
+	switch OP {
+	case LOCAL:
+		return X.Get([]byte(key))
+	case SPRUCE:
+	case SpruceLocal:
+		return kvGet([]byte(key))
+	}
+	return []byte("")
 }
 func (sn Session) Flush(key string) interface{} {
-	//x := X[sn.Cookie]
-	//for _, v := range x {
-	//	if v.Key == key {
-	//		return v.Body
-	//	}
-	//}
-	//return nil
-	return X.Delete([]byte(key))
+	switch OP {
+	case LOCAL:
+		return X.Delete([]byte(key))
+	case SPRUCE:
+	case SpruceLocal:
+		return kvDelete([]byte(key))
+	}
+	return []byte("")
+
 }
 
 // other function
@@ -342,4 +363,16 @@ func newId() []byte {
 		da[i] = d[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(15)]
 	}
 	return da
+}
+func kvSet(key, body []byte, exp int) []byte {
+	KV.Get().Write(spruce.EntrySet(key, body, exp))
+	return KV.Get().Read()
+}
+func kvGet(key []byte) []byte {
+	KV.Get().Write(spruce.EntryGet(key))
+	return KV.Get().Read()
+}
+func kvDelete(key []byte) []byte {
+	KV.Get().Write(spruce.EntryDelete(key))
+	return KV.Get().Read()
 }
