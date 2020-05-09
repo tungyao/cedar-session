@@ -92,6 +92,7 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true, Secure: true,
+				Path:    "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -115,7 +116,7 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -136,7 +137,7 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -157,7 +158,7 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -197,7 +198,7 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
@@ -218,7 +219,7 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
@@ -239,7 +240,7 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
@@ -260,9 +261,9 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true,
-				Secure:   true,
-				Expires:  time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
+				HttpOnly: true, Path: "/",
+				Secure:  true,
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
