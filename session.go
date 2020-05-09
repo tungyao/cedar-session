@@ -91,19 +91,16 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
 		if c != nil {
 			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-				Cookie:  c.Value,
+				Cookie: c.Value,
 			})
 		} else {
-			fn(writer, request, Session{
-				RWMutex: sync.RWMutex{},
-			})
+			fn(writer, request, Session{})
 		}
 	}, hal, middleware...)
 }
@@ -115,7 +112,7 @@ func (si *sessionx) Post(path string, fn func(w http.ResponseWriter, r *http.Req
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -136,7 +133,7 @@ func (si *sessionx) Put(path string, fn func(w http.ResponseWriter, r *http.Requ
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -157,7 +154,7 @@ func (si *sessionx) Delete(path string, fn func(w http.ResponseWriter, r *http.R
 			http.SetCookie(writer, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
 			})
 		}
@@ -181,10 +178,23 @@ func (si *sessionx) Dynamic(ymlPath string) {
 	si.Handler.Dynamic(ymlPath)
 }
 func (si *sessionx) Middleware(name string, fn func(w http.ResponseWriter, r *http.Request, s Session) bool) {
-	si.Handler.Middle(name, func(w http.ResponseWriter, r *http.Request) bool {
-		return fn(w, r, Session{
-			RWMutex: sync.RWMutex{},
-		})
+	si.Handler.Middle(name, func(writer http.ResponseWriter, request *http.Request) bool {
+		c, err := request.Cookie("session")
+		if err == http.ErrNoCookie {
+			x := Sha1(si.CreateUUID([]byte(request.RemoteAddr)))
+			http.SetCookie(writer, &http.Cookie{
+				Name:     "session",
+				Value:    string(x),
+				HttpOnly: true, Secure: true, Path: "/",
+				Expires: time.Now().Add(1 * time.Hour), Domain: si.Domino,
+			})
+		}
+		if c != nil {
+			return fn(writer, request, Session{
+				Cookie: c.Value,
+			})
+		}
+		return fn(writer, request, Session{})
 	})
 }
 
@@ -218,7 +228,7 @@ func (t *Group) Post(path string, fn func(w http.ResponseWriter, r *http.Request
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
@@ -239,7 +249,7 @@ func (t *Group) Put(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
@@ -261,8 +271,8 @@ func (t *Group) Delete(path string, fn func(w http.ResponseWriter, r *http.Reque
 				Name:     "session",
 				Value:    string(x),
 				HttpOnly: true,
-				Secure:   true,
-				Expires:  time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
+				Secure:   true, Path: "/",
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
 		if c != nil {
@@ -282,10 +292,23 @@ func (t *Group) Group(path string, fn func(groups *Group)) {
 	fn(g)
 }
 func (t *Group) Middleware(name string, fn func(w http.ResponseWriter, r *http.Request, s Session) bool) {
-	t.gG.Middleware(name, func(w http.ResponseWriter, r *http.Request) bool {
-		return fn(w, r, Session{
-			RWMutex: sync.RWMutex{},
-		})
+	t.gG.Middleware(name, func(writer http.ResponseWriter, request *http.Request) bool {
+		c, err := request.Cookie("session")
+		if err == http.ErrNoCookie {
+			x := Sha1(t.S.CreateUUID([]byte(request.RemoteAddr)))
+			http.SetCookie(writer, &http.Cookie{
+				Name:     "session",
+				Value:    string(x),
+				HttpOnly: true, Secure: true, Path: "/",
+				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
+			})
+		}
+		if c != nil {
+			return fn(writer, request, Session{
+				Cookie: c.Value,
+			})
+		}
+		return fn(writer, request, Session{})
 	})
 }
 
