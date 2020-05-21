@@ -207,7 +207,7 @@ func (t *Group) Get(path string, fn func(w http.ResponseWriter, r *http.Request,
 			http.SetCookie(w, &http.Cookie{
 				Name:     "session",
 				Value:    string(x),
-				HttpOnly: true, Secure: true,
+				HttpOnly: true, Secure: true, Path: "/",
 				Expires: time.Now().Add(1 * time.Hour), Domain: t.S.Domino,
 			})
 		}
