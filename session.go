@@ -27,21 +27,21 @@ const (
 )
 
 func main() {
-	// r := cedar.NewRouter()
-	// x := NewSession(r, LOCAL)
-	// x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
+	//r := cedar.NewRouter()
+	//x := NewSession(r, LOCAL)
+	//x.Get("/set", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//	s.Set("hello", "world"+r.RemoteAddr)
 	//	w.Write([]byte("hello world"))
-	// }, nil)
-	// x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
+	//}, nil)
+	//x.Get("/get", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//	fmt.Fprintf(w, "%s", s.Get("hello"))
-	// }, nil)
-	// x.Group("/a", func(groups *Group) {
+	//}, nil)
+	//x.Group("/a", func(groups *Group) {
 	//	groups.Get("/b", func(w http.ResponseWriter, r *http.Request, s Session) {
 	//		w.Write([]byte("hello"))
 	//	}, nil)
-	// })
-	// http.ListenAndServe(":80", x.Handler)
+	//})
+	//http.ListenAndServe(":80", x.Handler)
 }
 func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 	s := &sessionx{
@@ -56,7 +56,7 @@ func NewSession(hp *cedar.Trie, types int, args ...interface{}) *sessionx {
 		X = spruce.CreateHash(4096)
 	case SPRUCE:
 	case SpruceLocal:
-		KV, _ = ap.NewPool(args[1].(int), args[2].(string))
+		KV, _ = ap.NewPool(args[0].(int), args[1].(string))
 	}
 	return s
 }
@@ -97,10 +97,13 @@ func (si *sessionx) Get(path string, fn func(w http.ResponseWriter, r *http.Requ
 		}
 		if c != nil {
 			fn(writer, request, Session{
-				Cookie: c.Value,
+				RWMutex: sync.RWMutex{},
+				Cookie:  c.Value,
 			})
 		} else {
-			fn(writer, request, Session{})
+			fn(writer, request, Session{
+				RWMutex: sync.RWMutex{},
+			})
 		}
 	}, hal, middleware...)
 }
@@ -327,7 +330,22 @@ func (si *sessionx) CreateUUID(xtr []byte) []byte {
 	ti := time.Now().UnixNano()
 	return []byte(fmt.Sprintf("%s-%x-%s-%s", strLow, ti, strMid, si.Self))
 }
-
+func CreateUUID() []byte {
+	str := fmt.Sprintf("%x", newId())
+	strLow := ComplementHex(str[:(len(str)-1)/3], 8)
+	strMid := ComplementHex(str[(len(str)-1)/3:(len(str)-1)*2/3], 4)
+	<-time.After(1 * time.Nanosecond)
+	ti := time.Now().UnixNano()
+	return []byte(fmt.Sprintf("%s%x%s", strLow, ti, strMid))
+}
+func Random() []byte {
+	str := fmt.Sprintf("%x", newId())
+	// strLow := ComplementHex(str[:(len(str)-1)/3], 8)
+	strMid := ComplementHex(str[(len(str)-1)/3:(len(str)-1)*2/3], 4)
+	<-time.After(1 * time.Nanosecond)
+	ti := time.Now().UnixNano()
+	return []byte(fmt.Sprintf("%x%s%s", ti, strMid, newId()))
+}
 func ComplementHex(s string, x int) string {
 	if len(s) == x {
 		return s
